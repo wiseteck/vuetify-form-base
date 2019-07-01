@@ -13,9 +13,9 @@
         <slot :name= "getKeyTopSlot(obj)"></slot>
 
           <!-- slot replaces complete item of defined type -> <div slot="item-slot-[type]>-->
-          <slot :name= "getTypeItemSlot(obj)">
+          <slot :name= "getTypeItemSlot(obj)" v-bind:obj="obj" >
           <!-- slot replaces complete item of defined key -> <div slot="item-slot-[key]>-->
-          <slot :name= "getKeyItemSlot(obj)">
+          <slot :name= "getKeyItemSlot(obj)" v-bind:obj="obj" >
 
           <!-- time -->
           <v-menu
