@@ -34,7 +34,7 @@
           <!-- date -->
           <v-menu
             v-else-if= "obj.schema.type === 'date'"
-            :close-on-content-click="false" :nudge-right="32" lazy transition="scale-transition"  offset-y full-width min-width="290px"
+            :close-on-content-click="true" :nudge-right="32" lazy transition="scale-transition"  offset-y full-width min-width="290px"
             ><v-text-field
               slot="activator"
               v-bind = "obj.schema"
@@ -42,7 +42,7 @@
               @focus = "onFocus($event, obj)"
               @input= "onInput($event, obj)"
             ></v-text-field>
-            <v-date-picker :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-date-picker>
+            <v-date-picker locale="ro" :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-date-picker>
           </v-menu>
 
           <!-- radio -->
@@ -64,7 +64,7 @@
           <!-- array -->
           <template v-else-if= "obj.schema.type === 'array'" >
             <div v-bind = "obj.schema" :value= "setValue(obj)" v-for="(item, ix) in setValue(obj)" :key="ix" >
-              <slot :name= "getKeyArraySlot(obj)" v-bind:item= "item" >
+              <slot :name= "getKeyArraySlot(obj)" v-bind:item= "item" v-bind:ix="ix"  >
                 <v-form-base
                   v-bind = "obj.schema"
                   :id="`${id}-${obj.key}-${ix}`"
