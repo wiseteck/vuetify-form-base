@@ -36,6 +36,7 @@
             v-else-if= "obj.schema.type === 'date'"
             :close-on-content-click="true" :nudge-right="32" lazy transition="scale-transition"  offset-y full-width min-width="290px"
             ><v-text-field
+              readonly
               slot="activator"
               v-bind = "obj.schema"
               :value= "setValue(obj)"
