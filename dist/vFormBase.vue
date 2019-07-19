@@ -43,7 +43,7 @@
               @focus = "onFocus($event, obj)"
               @input= "onInput($event, obj)"
             ></v-text-field>
-            <v-date-picker locale="ro" :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-date-picker>
+            <v-date-picker  v-if="obj.schema.disabled !== true" locale="ro" :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-date-picker>
           </v-menu>
 
           <!-- radio -->
