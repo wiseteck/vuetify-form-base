@@ -1,9 +1,6 @@
 import Vue from 'vue'
-import Vuetify from 'vuetify'
-import 'vuetify/dist/vuetify.min.css' // Ensure you are using css-loader
+import vuetify from '@/plugins/vuetify'
 import App from '@/App.vue'
-
-Vue.use(Vuetify)
 
 Vue.config.warnHandler = function (err, vm, info) {
   // handle error
@@ -12,9 +9,9 @@ Vue.config.warnHandler = function (err, vm, info) {
   console.warn('WARNING:', err)
 }
 
-
 /* eslint-disable no-new */
 new Vue({
   el: '#main',
+  vuetify,
   render: h => h(App)
 })

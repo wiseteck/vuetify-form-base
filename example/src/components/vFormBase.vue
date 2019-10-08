@@ -17,37 +17,9 @@
           <!-- slot replaces complete item of defined key -> <div slot="item-slot-[key]>-->
           <slot :name= "getKeyItemSlot(obj)">
 
-          <!-- time -->
-          <v-menu
-            v-if= "obj.schema.type === 'time'"
-            :close-on-content-click="false" :nudge-right="32" lazy transition="scale-transition" offset-y full-width min-width="290px"
-          ><v-text-field
-              slot="activator"
-              v-bind = "obj.schema"
-              :value= "setValue(obj)"
-              @focus = "onFocus($event, obj)"
-              @input= "onInput($event, obj)"
-            ></v-text-field>
-            <v-time-picker :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-time-picker>
-          </v-menu>
-
-          <!-- date -->
-          <v-menu
-            v-else-if= "obj.schema.type === 'date'"
-            :close-on-content-click="false" :nudge-right="32" lazy transition="scale-transition"  offset-y full-width min-width="290px"
-            ><v-text-field
-              slot="activator"
-              v-bind = "obj.schema"
-              :value= "setValue(obj)"
-              @focus = "onFocus($event, obj)"
-              @input= "onInput($event, obj)"
-            ></v-text-field>
-            <v-date-picker :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-date-picker>
-          </v-menu>
-
           <!-- radio -->
           <v-radio-group
-            v-else-if= "obj.schema.type === 'radio'"
+            v-if= "obj.schema.type === 'radio'"
             v-bind = "obj.schema"
             :value= "setValue(obj)"
             @change= "onInput($event, obj)"
@@ -56,8 +28,8 @@
               v-for="(o,ix) in obj.schema.options"
               v-bind = "obj.schema"
               :key="ix"
-              :label="o"
-              :value="o"
+              :label="sanitizeOptions(o).label"
+              :value="sanitizeOptions(o).value"
             ></v-radio>
           </v-radio-group>
 
@@ -70,7 +42,6 @@
                   :value= "item"
                   :schema= "obj.schema.schema"
                 />
-                <!-- :schema= "sanitizeSchema(obj, idx)" -->
               </slot>
             </div>
           </template>
@@ -92,15 +63,15 @@
               <v-toolbar-title>{{obj.schema.label}}</v-toolbar-title>
             </v-toolbar>
             <v-list v-bind = "obj.schema">
-              <v-list-tile
+              <v-list-item
                 v-for="(item, ix) in setValue(obj)" :key="ix"
-                :class= "obj.schema.selected === ix ? 'active' : 'inactive'" 
+                :class= "obj.schema.selected === ix ? 'active' : 'inactive'"
                 @click= "obj.schema.selected = ix; onClick($event, obj, 'list', ix)"
               >
-                <v-list-tile-content>
-                  <v-list-tile-title v-text="obj.schema.item ? item[obj.schema.item] : item"></v-list-tile-title>
-                </v-list-tile-content>
-              </v-list-tile>
+                <v-list-item-content>
+                  <v-list-item-title v-text="obj.schema.item ? item[obj.schema.item] : item"></v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
             </v-list>
           </template>
 
@@ -108,22 +79,68 @@
           <div
             v-else-if= "obj.schema.type === 'switch' || obj.schema.type === 'checkbox'"
             :is= "mapTypeToComponent(obj.schema.type)"
-            v-bind = "obj.schema"
             :input-value= "setValue(obj)"
+            v-bind = "obj.schema"
             @change= "onInput($event, obj)"
-          ></div>   
-          <!-- button   -->
+          ></div>
+
+          <!-- file -->
+          <v-file-input
+            v-else-if= "obj.schema.type === 'file' "
+            :value= "setValue(obj)"
+            v-bind = "obj.schema"
+            @focus = "onFocus($event, obj)"
+            @change= "onInput($event, obj)"
+          ></v-file-input>
+
+          <!-- btn-toggle -->
+          <v-btn-toggle
+            v-else-if= "obj.schema.type === 'btn-toggle'"
+            v-bind = "obj.schema"
+            color = ""
+            :value= "setValue(obj)"
+            @change= "onInput($event, obj)"
+            >
+            <v-btn
+              v-for="(b,ix) in obj.schema.options"
+              v-bind = "obj.schema"
+              :key="ix"
+              :value="sanitizeOptions(b).value"
+            >
+              <v-icon :dark="obj.schema.dark">{{sanitizeOptions(b).icon}}</v-icon>
+              {{sanitizeOptions(b).label}}
+            </v-btn>
+          </v-btn-toggle>
+
+          <!-- btn   -->
           <v-btn
-            v-else-if= "obj.schema.type === 'button' || obj.schema.type === 'btn'"
+            v-else-if= "obj.schema.type === 'btn'"
             v-bind = "obj.schema"
             @click = "onClick($event, obj, button)"
-            >
-            <v-icon left dark>{{obj.schema.iconLeft}}</v-icon>
-            {{setValue(obj)}}{{obj.schema.label}}
-            <v-icon right dark>{{obj.schema.iconRight}}</v-icon>
+          >
+            <v-icon v-if="obj.schema.iconLeft" left :dark="obj.schema.dark">{{obj.schema.iconLeft}}</v-icon>
+            {{setValue(obj)}}
+            <v-icon v-if="obj.schema.iconCenter" :dark="obj.schema.dark">{{obj.schema.iconCenter}}</v-icon>
+            {{obj.schema.label}}
+            <v-icon v-if="obj.schema.iconRight" right :dark="obj.schema.dark">{{obj.schema.iconRight}}</v-icon>
           </v-btn>
 
-          <!-- all other -->
+          <!-- if masked use this v-text-field section - https://vuejs-tips.github.io/vue-the-mask/  -->
+          <v-text-field
+            v-else-if= "obj.schema.mask"
+            v-bind = "obj.schema"
+            v-mask = "obj.schema.mask"
+            :value= "setValue(obj)"
+            @focus = "onFocus($event, obj)"
+            @click:append = "onClick($event, obj, append)"
+            @click:append-outer = "onClick($event, obj, appendOuter)"
+            @click:clear = "onClick($event, obj, clear )"
+            @click:prepend = "onClick($event, obj, prepend )"
+            @click:prepend-inner = "onClick($event, obj, prependInner )"
+            @input= "onInput($event, obj)"
+          ></v-text-field>
+
+          <!-- all other Types -> see typeToComponent -->
           <div
             v-else
             :is= "mapTypeToComponent(obj.schema.type)"
@@ -151,29 +168,37 @@
       <v-spacer v-if= "obj.schema.spacer" :key= "`s-${index}`"></v-spacer>
 
     </template>
+
   </v-layout>
 </template>
 
 <script>
 // import & declarations
-import { get, isPlainObject, isFunction, isArray, orderBy, cloneDeep } from 'lodash'
+import { get, isPlainObject, isFunction, isString, orderBy } from 'lodash'
+import { mask } from 'vue-the-mask'
 
 const typeToComponent = {
-  // implemented in Vuetify
+
+  // use native HTML5 Input Types - https://www.wufoo.com/html5/
   text: 'v-text-field',
   password: 'v-text-field',
   email: 'v-text-field',
-
-  // native Input Types - https://www.wufoo.com/html5/
   tel: 'v-text-field',
   url: 'v-text-field',
-  color: 'v-text-field',
   search: 'v-text-field',
   number: 'v-text-field',
-  file: 'v-text-field',
-  range: 'v-slider'
-}
 
+  // map schema.type to vuetify-control (vuetify 2.0)
+  range: 'v-slider',
+  file: 'v-file-input',
+  switch: 'v-switch',
+  checkbox: 'v-checkbox',
+  color: 'v-color-picker',
+  date: 'v-date-picker',
+  time: 'v-time-picker',
+  textarea: 'v-textarea'
+}
+// Declaration
 const orderDirection = 'ASC'
 const pathDelimiter = '.'
 const classKeyDelimiter = '-'
@@ -182,6 +207,7 @@ const defaultID = 'form-base'
 const itemClassAppendix = 'item'
 const typeClassAppendix = 'type'
 const keyClassAppendix = 'key'
+const propertyClassAppendix = 'prop'
 
 const arraySlotAppendix = 'slot-array'
 const topSlotAppendix = 'slot-top'
@@ -195,13 +221,13 @@ const append = 'append'
 const appendOuter = 'append-outer'
 const prepend = 'prepend'
 const prependInner = 'prepend-inner'
-
-let defaultSchemaSchema = null
 //
-
 export default {
 
   name: 'v-form-base',
+
+  // Info Mask https://vuejs-tips.github.io/vue-the-mask/
+  directives: { mask },
 
   props: {
     id: {
@@ -248,24 +274,6 @@ export default {
 
   methods: {
 
-    sanitizeSchema (obj, idx) {
-      let clonedObj = cloneDeep(obj)
-      let clonedSchema = isArray(clonedObj.schema.schema) ? clonedObj.schema.schema[idx] : clonedObj.schema.schema
-
-      if (isArray(obj.schema.schema)) {
-        obj.schema.schema[idx] = obj.schema.schema[idx] ? obj.schema.schema[idx] : cloneDeep(defaultSchemaSchema)
-      } 
-      else {
-        obj.schema.schema = []
-        defaultSchemaSchema = clonedObj.schema.schema
-        obj.schema.schema[idx] = obj.schema.schema[idx] ? obj.schema.schema[idx] : cloneDeep(defaultSchemaSchema)
-      }
-      // console.warn('defaultSchemaSchema', defaultSchemaSchema);
-      // console.warn('{...defaultSchemaSchema}', {...defaultSchemaSchema});
-
-      return obj.schema.schema[idx]
-    },
-
     mapTypeToComponent (type) {
       // map ie. schema:{ type:'password', ... } to vuetify control v-text-field'
       return typeToComponent[type] ? typeToComponent[type] : `v-${type}`
@@ -273,19 +281,19 @@ export default {
 
     // KEY SLOTS
     getKeyArraySlot (obj) {
-      // get Key specific name by replacing '.' with '-' and prepending 'slot-item'  -> 'slot-ARRAY-key-adress-city'
+      // get Key specific name by replacing '.' with '-' and prepending 'slot-item'  -> 'slot-ARRAY-key-address-city'
       return this.getKeyClassNameWithAppendix(obj, arraySlotAppendix + '-key')
     },
     getKeyItemSlot (obj) {
-      // get Key specific name by replacing '.' with '-' and prepending 'slot-item'  -> 'slot-item-key-adress-city'
+      // get Key specific name by replacing '.' with '-' and prepending 'slot-item'  -> 'slot-item-key-address-city'
       return this.getKeyClassNameWithAppendix(obj, itemSlotAppendix + '-key')
     },
     getKeyTopSlot (obj) {
-      // get Key specific name by replacing '.' with '-' and prepending 'slot-top'  -> 'slot-top-key-adress-city'
+      // get Key specific name by replacing '.' with '-' and prepending 'slot-top'  -> 'slot-top-key-address-city'
       return this.getKeyClassNameWithAppendix(obj, topSlotAppendix + '-key')
     },
     getKeyBottomSlot (obj) {
-      // get Key specific name by replacing '.' with '-' and prepending 'slot-bottom'  -> 'slot-bottom-key-adress-city'
+      // get Key specific name by replacing '.' with '-' and prepending 'slot-bottom'  -> 'slot-bottom-key-address-city'
       return this.getKeyClassNameWithAppendix(obj, bottomSlotAppendix + '-key')
     },
     //
@@ -304,8 +312,15 @@ export default {
     },
     //
     // CLASS Names
+    getPropertyClassNameWithAppendix (obj, appendix) {
+      // get PROP specific name by app-/prepending 'appendix-' and replacing '.' with '-' in nested key path  -> 'controls switch'
+      return obj.key ? obj.key.split(pathDelimiter).map(s => `${appendix ? appendix + classKeyDelimiter : ''}${s}`).join(' ') : ''
+    },
+    getPropertyClassName (obj) {
+      return this.getPropertyClassNameWithAppendix(obj, propertyClassAppendix)
+    },
     getKeyClassNameWithAppendix (obj, appendix) {
-      // get KEY specific name by app-/prepending 'appendix-' and replacing '.' with '-' in nested key path  -> 'top-slot-adress-city'
+      // get KEY specific name by app-/prepending 'appendix-' and replacing '.' with '-' in nested key path  -> 'top-slot-address-city'
       return `${appendix ? appendix + classKeyDelimiter : ''}${obj.key.replace(/\./g, '-')}`
     },
     getKeyClassName (obj) {
@@ -340,15 +355,14 @@ export default {
 
     getClassName (obj) {
       // combines all into a single classname
-      // class => ie. 'item type-checkbox key-adress-zip xs12 md6 offset-xs0'
-      return `${itemClassAppendix} ${this.getTypeClassName(obj)} ${this.getKeyClassName(obj)} ${this.getGridClassName(obj)}`
+      // class => ie. 'item type-checkbox key-address-zip prop-adress prop-zip xs12 md6 offset-xs0'
+      return `${itemClassAppendix} ${this.getTypeClassName(obj)} ${this.getKeyClassName(obj)} ${this.getPropertyClassName(obj)} ${this.getGridClassName(obj)}`
     },
     //
     // Map Values coming FROM Control or going TO Control
     toCtrl (params) {
       // manipulate value going to control, toCtrl-function must return a (modified) value
       // schema:{ name: { type:'text', toCtrl: ( {value} ) value && value.toUpperCase, ... }, ... }
-
       return isFunction(params.obj.schema.toCtrl) ? params.obj.schema.toCtrl(params) : params.value
     },
     fromCtrl (params) {
@@ -357,12 +371,18 @@ export default {
       return isFunction(params.obj.schema.fromCtrl) ? params.obj.schema.fromCtrl(params) : params.value
     },
     //
+    // Button-Toggle sanitize item from array schema.options
+    sanitizeOptions (b) {
+      return isString(b) ? { value: b, label: b } : b
+    },
+    //
     // Set Value
     setValue (obj) {
       // Control gets a Value
       return this.toCtrl({ value: obj.value, obj, data: this.storeStateData, schema: this.storeStateSchema })
     },
-    // Get Value from Input & Events
+    //
+    // Get Value from Input & other Events
     onInput (value, obj) {
       // Value after change in Control
       value = this.fromCtrl({ value, obj, data: this.storeStateData, schema: this.storeStateSchema })
@@ -385,7 +405,7 @@ export default {
         schema: this.storeStateSchema
       })
     },
-    onClick (event, obj, pos, index ) {
+    onClick (event, obj, pos, index) {
       this.emitValue('click', { on: 'click',
         id: this.ref,
         index: index !== undefined ? index : this.ref.replace(/\D/g, ''),
@@ -419,34 +439,17 @@ export default {
     onResize () {
       this.emitValue('resize', { on: 'resize', id: this.ref, params: { x: window.innerWidth, y: window.innerHeight }, data: this.storeStateData, schema: this.storeStateSchema })
     },
+    //
     // Event Base
     emitValue (emit, val) {
       if (this.$parent.id) {
         this.$parent.$emit(this.getEventParentName(emit), { ...val, parent: this.$parent })
+        if ('inputclick'.indexOf(emit) > -1) this.$parent.$emit(this.getEventParentName('change'), { ...val, parent: this.$parent })
         this.$parent.$emit(this.getEventParentName('update'), { ...val, parent: this.$parent })
       } else {
-        this.$emit(this.getEventName(emit), val)
-        this.$emit(this.getEventName('update'), val)
-      }
-    },
-    getEmitObject (on, obj, pos) {
-    // xxxxxxxxxxxxxtodo not in use <<<<<<<<<<<<<
-      return {
-        on,
-        id: this.ref,
-        key: obj.key,
-        value, // ?value input or obj.vlue
-        index: this.ref.replace(/\D/g, ''), // index of array item
-        obj,
-        params: {
-          pos,
-          text: event.srcElement && event.srcElement.innerText,
-          x: window.innerWidth,
-          y: window.innerHeight
-        },
-        data: this.storeStateData,
-        schema: this.storeStateSchema,
-        parent: this.$parent
+        this.$emit(this.getEventName(emit), val) // listen to specific event
+        if ('inputclick'.indexOf(emit) > -1) this.$emit(this.getEventName('change'), val) // listen only to changes
+        this.$emit(this.getEventName('update'), val) // all listen to events
       }
     },
     getEventName (eventName) {
@@ -455,10 +458,10 @@ export default {
     getEventParentName (eventName) {
       return this.$parent.id !== defaultID ? `${eventName}:${this.$parent.id}` : eventName
     },
-
+    //
     // PREPARE ARRAYS DATA & SCHEMA
     setObjectByPath (object, path, value) {
-      // resolves chained keys (like 'user.adress.street') on an object and set the value
+      // resolves chained keys (like 'user.address.street') on an object and set the value
       let pathArray = path.split(pathDelimiter)
       pathArray.forEach((p, ix) => {
         if (ix === pathArray.length - 1) this.$set(object, p, value)
@@ -506,7 +509,7 @@ export default {
     },
     flattenAndCombineToArray (data, schema) {
       // flatten nested structure of both objects 'data' & 'schema' ...
-      let flattenedObjects = this.flattenObjects(data, schema)      
+      let flattenedObjects = this.flattenObjects(data, schema)
       // ... and combine them to an array
       return this.combineObjectsToArray(flattenedObjects)
     }
