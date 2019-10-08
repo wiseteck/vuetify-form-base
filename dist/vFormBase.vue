@@ -140,6 +140,24 @@
             @input= "onInput($event, obj)"
           ></v-text-field>
 
+        <!-- menu-date -->
+         <v-menu
+            v-else-if= "obj.schema.type === 'menu-date'"
+            :close-on-content-click="true" :nudge-right="40" transition="scale-transition" offset-y min-width="290px"
+          >
+            <template v-slot:activator="{ on }">
+              <v-text-field
+                prepend-icon="event"
+                readonly
+                v-on="on"
+                v-bind = "obj.schema"
+                :value= "setValue(obj)"
+                @focus = "onFocus($event, obj)"
+                @input= "onInput($event, obj)"
+              ></v-text-field>
+            </template>
+            <v-date-picker v-if="obj.schema.disabled !== true" :value= "setValue(obj)" @focus = "onFocus($event, obj)" @input= "onInput($event, obj)"></v-date-picker>
+          </v-menu>
           <!-- all other Types -> see typeToComponent -->
           <div
             v-else
